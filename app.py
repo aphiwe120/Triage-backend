@@ -221,6 +221,9 @@ def twilio_webhook():
             print(f"❌ Error in Twilio webhook: {e}")
 
     return "<Response></Response>", 200
+@app.route('/', methods=['GET'])
+def health_check():
+    return "✅ Triage Backend is Live and Running!", 200
 if __name__ == '__main__':
     # Runs the server locally on port 5000
     app.run(port=5000, debug=True) 
