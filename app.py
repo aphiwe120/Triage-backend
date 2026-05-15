@@ -252,6 +252,16 @@ def create_manager():
     except Exception as e:
         print(f"Error creating manager: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/api/v1/admin/managers', methods=['GET'])
+def get_managers():
+    try:
+        # Fetch all records from the Managers table
+        response = supabase.table('Managers').select('*').execute()
+        
+        return jsonify({"status": "success", "data": response.data}), 200
+    except Exception as e:
+        print(f"Error fetching managers: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 if __name__ == '__main__':
     # Runs the server locally on port 5000
     app.run(port=5000, debug=True) 
