@@ -224,6 +224,34 @@ def twilio_webhook():
 @app.route('/', methods=['GET'])
 def health_check():
     return "✅ Triage Backend is Live and Running!", 200
+@app.route('/api/v1/admin/create-manager', methods=['POST'])
+def create_manager():
+    data = request.json
+    email = data.get('email')
+    temp_password = data.get('temp_password')
+    name = data.get('name')
+
+    try:
+        # 1. Create the user using the Admin API (Bypasses email verification)
+        new_user = supabase.auth.admin.create_user({
+            "email": email,
+            "password": temp_password,
+            "email_confirm": True 
+        })
+
+        # 2. Add them to your Managers table with the forced password flag
+        # (Make sure you have a 'Managers' table in Supabase with these columns!)
+        supabase.table('Managers').insert({
+            "id": new_user.user.id,
+            "name": name,
+            "needs_password_change": True
+        }).execute()
+
+        return jsonify({"status": "success", "message": f"Manager {name} enrolled!"}), 200
+
+    except Exception as e:
+        print(f"Error creating manager: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 if __name__ == '__main__':
     # Runs the server locally on port 5000
     app.run(port=5000, debug=True) 
