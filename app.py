@@ -262,6 +262,19 @@ def get_managers():
     except Exception as e:
         print(f"Error fetching managers: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+@app.route('/api/v1/admin/toggle-access', methods=['POST'])
+def toggle_access():
+    data = request.get_json()
+    manager_id = data.get('manager_id')
+    new_status = data.get('is_active') # This will be True or False
+
+    try:
+        # Update the manager's status in your Supabase table
+        response = supabase.table('Managers').update({'is_active': new_status}).eq('id', manager_id).execute()
+        
+        return jsonify({"success": True, "message": "Access updated successfully!"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 if __name__ == '__main__':
     # Runs the server locally on port 5000
     app.run(port=5000, debug=True) 
