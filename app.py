@@ -63,7 +63,8 @@ def send_whatsapp_reply(recipient_number, message_body):
     This function will send a reply back to the tenant via the WhatsApp API.
     You will call this function from within receive_message() after processing the incoming message.
     """
-    target_url="https://graph.facebook.com/v25.0/1205221329334393/messages"
+    phone_id=os.getenv("WHATSAPP_PHONE_ID")
+    target_url=f"https://graph.facebook.com/v25.0/{phone_id}/messages"
     headers = {
         "Authorization": f"Bearer {os.getenv('WHATSAPP_BEARER_TOKEN')}",
         "Content-Type": "application/json"
