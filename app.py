@@ -106,6 +106,61 @@ def verify_webhook():
             
     return 'Server is running!', 200
 
+@app.route('/api/v1/manager/add-property', methods=['POST'])
+def add_property():
+    data = request.json
+    manager_id = data.get('manager_id')
+    property_name = data.get('property_name')
+
+    try:
+        # 1. Look up the manager's paid limit
+        manager_query = supabase.table('Managers').select('property_limit').eq('id', manager_id).execute()
+        limit = manager_query.data[0]['property_limit']
+
+        # 2. Count how many properties they currently have
+        # (Assuming you have a 'Properties' table linked to their manager_id)
+        count_query = supabase.table('Properties').select('id', count='exact').eq('manager_id', manager_id).execute()
+        current_count = count_query.count
+
+        # 3. THE BOUNCER: Check the limit
+        if current_count >= limit:
+            return jsonify({
+                "status": "error", 
+                "message": f"Upgrade required. You have reached your limit of {limit} properties."
+            }), 403 # 403 means Forbidden
+
+        # 4. If they pass the check, insert the property
+        supabase.table('Properties').insert({
+            "manager_id": manager_id,
+            "name": property_name
+        }).execute()
+
+        return jsonify({"status": "success", "message": "Property added successfully!"}), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/v1/manager/<manager_id>/properties', methods=['GET'])
+def get_manager_properties(manager_id):
+    try:
+        # 1. Get the limit
+        manager_query = supabase.table('Managers').select('property_limit').eq('id', manager_id).execute()
+        limit = manager_query.data[0]['property_limit'] if manager_query.data else 50
+
+        # 2. Get the properties
+        properties_query = supabase.table('Properties').select('*').eq('manager_id', manager_id).execute()
+        properties = properties_query.data
+
+        return jsonify({
+            "status": "success", 
+            "limit": limit,
+            "current_count": len(properties),
+            "properties": properties
+        }), 200
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/webhook', methods=['POST'])
 def receive_message():
     """
